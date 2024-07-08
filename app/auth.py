@@ -32,8 +32,8 @@ def register():
         if user:
             flash('Username already taken','danger')
         else:
-            query = text('INSERT INTO user (username, password) VALUES (:username, :password)')
-            db.session.execute(query, {'username': username, 'password': hashed_password})
+            query = text('INSERT INTO user (username, password, isadmin) VALUES (:username, :password, :isadmin)')
+            db.session.execute(query, {'username': username, 'password': hashed_password, 'isadmin':False})
             db.session.commit()
             flash('Registration successful! You can now login', "success")
             return redirect(url_for('login'))

@@ -5,4 +5,13 @@
 {% block content %}
 <h2>Welcome to the Home Page!</h2>
 <p>This is a simple Flask application.</p>
+
+<h1>Items List</h1>
+<ul>
+    {% for item in items %}
+    <li>
+        <strong>{{ item.item_name }}</strong>: {{ item.item_description }}
+    </li>
+    {% endfor %}
+</ul>
 {% endblock %}
