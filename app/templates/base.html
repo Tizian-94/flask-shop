@@ -11,11 +11,15 @@
         <h1>My Flask App</h1>
         <nav>
             <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('cart') }}">Cart ({{ cart_item_count }})</a>
             {% if 'username' in session %}
                 <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}">Login</a>
                 <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+            {% if session['username'] %}
+            <a href="{{ url_for('admin') }}">Admin Page</a>
             {% endif %}
         </nav>
     </header>

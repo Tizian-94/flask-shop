@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+</head>
+<body>
+    <h1>Shopping Cart</h1>
+    <table border="1">
+        <tr>
+            <th>Item Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+            <th>Actions</th>
+        </tr>
+        {% for cart_item in cart_items %}
+        <tr>
+            <td>{{ cart_item.item.item_name }}</td>
+            <td>{{ cart_item.item.item_description }}</td>
+            <td>${{ cart_item.item.price }}</td>
+            <td>
+                <form action="{{ url_for('update_cart', item_id=cart_item.item.id) }}" method="POST">
+                    <input type="number" name="quantity" value="{{ cart_item.quantity }}" min="1">
+                    <button type="submit">Update</button>
+                </form>
+            </td>
+            <td>${{ cart_item.item.price * cart_item.quantity }}</td>
+            <td>
+                <form action="{{ url_for('remove_from_cart', item_id=cart_item.item.id) }}" method="POST">
+                    <button type="submit" onclick="return confirm('Are you sure you want to remove this item?')">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h2>Total Cost: ${{ total_cost }}</h2>
+    <a href="{{ url_for('home') }}">Continue Shopping</a>
+</body>
+</html>

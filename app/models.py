@@ -16,12 +16,21 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     item_name = db.Column(db.String(80), nullable=False)
     item_description = db.Column(db.String(200), nullable=False)
-    added_by = db.Column(db.String(20), nullable=False) 
+    added_by = db.Column(db.String(20), nullable=False)
+    image_url = db.Column(db.String(200))
+    price = db.Column(db.Float)
 
     def __repr__(self):
-        return f"Items('{self.item_name}', '{self.item_description}', '{self.added_by}')"
+        return f"Item('{self.item_name}', '{self.item_description}', '{self.added_by}', '{self.image_url}', '{self.price}')"
 
-    
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable = False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    item = db.relationship('Item',backref='cart_items')
+    user = db.relationship('User',backref='cart_items')
+
 def create_tables():
     with db.engine.connect() as connection:
 
@@ -42,6 +51,18 @@ def create_tables():
                 item_name TEXT NOT NULL,
                 item_description TEXT NOT NULL,
                 added_by TEXT NOT NULL,
+            )
+        ''')
+        )
+
+        connection.execute(text('''
+            CREATE TABLE IF NOT EXISTS cart_item (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                item_id INTEGER NOT NULL,
+                quantity INTEGER DEFAULT 1,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (item_id) REFERENCES item(id)
             )
         ''')
         )

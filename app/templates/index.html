@@ -9,9 +9,21 @@
 <h1>Items List</h1>
 <ul>
     {% for item in items %}
-    <li>
-        <strong>{{ item.item_name }}</strong>: {{ item.item_description }}
-    </li>
+        <div class="item">
+            <h3>{{ item.item_name }}</h3>
+            <p>{{ item.item_description }}</p>
+            {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.item_name }}" style="max-width: 200px; max-height: 200px; object-fit: cover;">
+            {% endif %}
+            <p>Price: ${{ item.price }}</p>
+            <p>Added by: {{ item.added_by }}</p>
+            <form action="{{ url_for('add_to_cart', item_id=item.id) }}" method="POST">
+                <label for="quantity">Quantity:</label>
+                <input type="number" name="quantity" id="quantity" value="1" min="1">
+                <button type="submit">Add to Cart</button>
+            </form>
+        </div>
     {% endfor %}
 </ul>
+
 {% endblock %}
