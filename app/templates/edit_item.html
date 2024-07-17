@@ -1,27 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Item</title>
-</head>
-<body>
-    <h1>Edit Item</h1>
+{% extends 'base.html' %}
+
+{% block title %}Edit Item{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Edit Item</h2>
     <form action="{{ url_for('edit_item', item_id=item.id) }}" method="POST">
-        <label for="item_name">Item Name:</label>
-        <input type="text" id="item_name" name="item_name" value="{{ item.item_name }}" required>
-        <br>
-        <label for="item_description">Description:</label>
-        <textarea id="item_description" name="item_description" required>{{ item.item_description }}</textarea>
-        <br>
-        <label for="image_url">Image URL:</label>
-        <input type="url" id="image_url" name="image_url" value="{{ item.image_url }}">
-        <br>
-        <label for="price">Price:</label>
-        <input type="number" id="price" name="price" step="0.01" value="{{ item.price }}" required>
-        <br>
-        <button type="submit">Save Changes</button>
+        <div class="form-group">
+            <label for="item_name">Item Name</label>
+            <input type="text" class="form-control" id="item_name" name="item_name" value="{{ item.item_name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="item_description">Description</label>
+            <textarea class="form-control" id="item_description" name="item_description" rows="3" required>{{ item.item_description }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="image_url">Image URL</label>
+            <input type="url" class="form-control" id="image_url" name="image_url" value="{{ item.image_url }}">
+        </div>
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number" class="form-control" id="price" name="price" step="0.01" value="{{ item.price }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+        <a href="{{ url_for('admin') }}" class="btn btn-secondary btn-block mt-2">Cancel</a>
     </form>
-    <a href="{{ url_for('admin') }}">Cancel</a>
-</body>
-</html>
+</div>
+{% endblock %}

@@ -1,7 +1,8 @@
 from app import app, db
-from flask import request, redirect, render_template, url_for, flash, session
-from app.models import Item, User, CartItem
+from flask import request, redirect, render_template, url_for, flash, session, abort
+from app.models import Item, User, CartItem, OrderItem, Order
 from sqlalchemy import text
+from flask import jsonify
 
 @app.route('/')
 def home():
@@ -218,3 +219,141 @@ def remove_from_cart(item_id):
         flash('Item not found in the cart', 'danger')
 
     return redirect(url_for('cart'))
+
+@app.route('/checkout', methods=['GET', 'POST'])
+def  checkout():
+    if 'username' not in session:
+        flash('You need to be logged in to access this page', 'danger')
+        return redirect(url_for('login'))
+    
+    username = session['username']
+    cart_items = db.session.execute(
+        text('''
+            SELECT ci.quantity, i.item_name, i.price, i.item_description 
+            FROM cart_item ci 
+            JOIN item i ON ci.item_id = i.id 
+            WHERE ci.user_id = (SELECT id FROM user WHERE username = :username)
+        '''), 
+        {'username': username}
+    ).fetchall()
+
+    if not cart_items:
+        return render_template('cart.html', alert_message='Your cart is empty. Please add items to your cart before checking out.')
+
+    total_cost = sum(item[2] * item[0] for item in cart_items)
+
+    if request.method == 'POST':
+        name = request.form['name']
+        surname = request.form['surname']
+        email = request.form['email']
+        address = request.form['address']
+        payment_method = request.form['payment_method']
+
+        result = db.session.execute(
+            text('''
+                INSERT INTO orders (username, name, surname, email, address, payment_method, total_cost)
+                VALUES (:username, :name, :surname, :email, :address, :payment_method, :total_cost)
+            '''), 
+            {
+                'username': username,
+                'name': name,
+                'surname': surname,
+                'email': email,
+                'address': address,
+                'payment_method': payment_method,
+                'total_cost': total_cost
+            }
+        )
+
+        order_id = result.lastrowid
+
+        for item in cart_items:
+            order_item_insert = text('''
+                INSERT INTO order_items (order_id, item_name, quantity)
+                VALUES (:order_id, :item_name, :quantity)
+            ''')
+            db.session.execute(order_item_insert, {
+                'order_id': order_id,
+                'item_name': item[1],
+                'quantity': item[0]
+            })
+        db.session.commit()
+
+        db.session.execute(
+            text('DELETE FROM cart_item WHERE user_id = (SELECT id FROM user WHERE username = :username)'),
+            {'username': username}
+        )
+        db.session.commit()
+        return redirect(url_for('order_complete', order_id=order_id))
+    
+    return render_template('checkout.html', cart_items=cart_items, total_cost=total_cost)
+
+@app.route('/order_complete/<int:order_id>')
+def order_complete(order_id):
+    order = db.session.execute(text('SELECT * FROM orders WHERE order_id = :order_id'), {'order_id':order_id}).fetchone()
+    order_items = db.session.execute(text('SELECT * FROM order_items WHERE order_id = :order_id'), {'order_id': order_id}).fetchall()
+
+    if not order:
+        flash('Order not found', 'danger')
+        return redirect(url_for('home'))
+    
+    return render_template('order_complete.html', order=order, order_items=order_items)
+
+@app.route('/admin/orders', methods=['GET'])
+def orders():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '', type=str)
+    per_page = 10
+
+    query = text('''
+        SELECT * FROM orders
+        WHERE username LIKE :search
+        OR name LIKE :search
+        OR surname LIKE :search
+        OR email LIKE :search
+        OR address LIKE :search
+        ORDER BY order_id DESC
+        LIMIT :limit OFFSET :offset
+    ''')
+
+    search_term = f'%{search}%'
+    orders_result = db.session.execute(query, {
+        'search': search_term,
+        'limit': per_page,
+        'offset': (page - 1) * per_page
+    })
+
+    orders = [dict(order) for order in orders_result.mappings()]
+
+    count_query = text('''
+        SELECT COUNT(*) FROM orders
+        WHERE username LIKE :search
+        OR name LIKE :search
+        OR surname LIKE :search
+        OR email LIKE :search
+        OR address LIKE :search
+    ''')
+
+    total_orders = db.session.execute(count_query, {'search': search_term}).scalar()
+
+    return jsonify({
+        'orders': orders,
+        'total': total_orders,
+        'pages': (total_orders + per_page - 1) // per_page,
+        'current_page': page
+    })
+
+@app.route('/admin/orders_page')
+def orders_page():
+    return render_template('orders.html')
+
+@app.route('/admin/orders/<int:order_id>')
+def order_details(order_id):
+    order = Order.query.filter_by(order_id=order_id).first()
+    if not order:
+        abort(404)
+
+    order_items = OrderItem.query.filter_by(order_id=order_id).all()
+
+    return render_template('order_details.html', order=order, order_items=order_items)
+

@@ -31,6 +31,28 @@ class CartItem(db.Model):
     item = db.relationship('Item',backref='cart_items')
     user = db.relationship('User',backref='cart_items')
 
+class Order(db.Model):
+    __tablename__ = 'orders'
+    order_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    payment_method = db.Column(db.String(50), nullable=False)
+    total_cost = db.Column(db.Float, nullable=False)
+    date = db.Column(db.String(20), nullable=False)
+
+    items = db.relationship('OrderItem', backref='order', lazy=True)
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), nullable=False)
+    item_name = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+
+
 def create_tables():
     with db.engine.connect() as connection:
 

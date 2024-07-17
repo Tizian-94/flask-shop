@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <a href="{{ url_for('home') }}" class="btn btn-primary">Return to Home</a>
+        <h1>Orders</h1>
+        <input type="text" id="search-input" class="form-control" placeholder="Search orders..." oninput="fetchOrders()">
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Total Cost</th>
+                    <th>Payment Method</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="orders-table-body">
+                <!-- Orders -->
+            </tbody>
+        </table>
+        <nav>
+            <ul class="pagination" id="pagination">
+                <!-- Pagination -->
+            </ul>
+        </nav>
+    </div>
+    <script>
+        let currentPage = 1;
+
+        function fetchOrders(page = 1) {
+            const searchInput = document.getElementById('search-input').value;
+            fetch(`/admin/orders?page=${page}&search=${encodeURIComponent(searchInput)}`)
+                .then(response => response.json())
+                .then(data => {
+                    currentPage = data.current_page;
+                    const tbody = document.getElementById('orders-table-body');
+                    tbody.innerHTML = '';
+                    data.orders.forEach(order => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${order.order_id}</td>
+                            <td>${order.username}</td>
+                            <td>${order.name}</td>
+                            <td>${order.surname}</td>
+                            <td>${order.email}</td>
+                            <td>${order.address}</td>
+                            <td>${order.total_cost}</td>
+                            <td>${order.payment_method}</td>
+                            <td>${order.date}</td>
+                            <td><a href="/admin/orders/${order.order_id}">View Details</a></td>                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    const pagination = document.getElementById('pagination');
+                    pagination.innerHTML = '';
+                    for (let i = 1; i <= data.pages; i++) {
+                        const li = document.createElement('li');
+                        li.className = 'page-item ' + (i === currentPage ? 'active' : '');
+                        li.innerHTML = `<a class="page-link" href="#" onclick="fetchOrders(${i})">${i}</a>`;
+                        pagination.appendChild(li);
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchOrders();
+        });
+    </script>
+</body>
+</html>
